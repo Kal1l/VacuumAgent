@@ -424,7 +424,6 @@ class VacuumSimulatorGUI:
 
         stats = {'penalty': [], 'steps': [], 'cleaned': [], 'final': [], 'all_cleaned': []}
         agent_type = self.agent_type.get()
-        total_penalty = 0  # Soma das penalidades de todas as simulações
         for i in range(n):
             self.env.grid = [row[:] for row in initial_grid]
             self.env.obstacles = [row[:] for row in initial_obstacles]
@@ -443,6 +442,13 @@ class VacuumSimulatorGUI:
                 percept = self.env.get_local_percept()
                 action = agent.select_action(percept)
                 prev_pos = self.env.agent_pos
+
+                # Indicação visual de colisão
+                highlight = None
+                if agent_type == 'reactive' and action != 'CLEAN' and action not in percept['possible_moves']:
+                    target_pos = self._get_target_pos(prev_pos, action)
+                    highlight = target_pos
+
                 self.env.execute_action(action)
                 if hasattr(agent, 'pos'):
                     agent.pos = self.env.agent_pos
@@ -455,15 +461,16 @@ class VacuumSimulatorGUI:
                 current_step += 1
                 if self.env.agent_pos != (0, 0):
                     started = True
-                self.draw_grid()
+                self.draw_grid(highlight)
                 self.status_label.config(
                     text=f"Simulação {i+1}/{n} | Passos: {current_step} | Limpo: {cleaned_count} | Penalidade: {penalty_score}"
                 )
                 self.root.update()
                 self.root.after(30)
+                if highlight:
+                    self.root.after(100, lambda: self.draw_grid())
                 if started and self.env.agent_pos == (0, 0):
                     break
-            total_penalty += penalty_score
             stats['penalty'].append(penalty_score)
             stats['steps'].append(current_step)
             stats['cleaned'].append(cleaned_count)
@@ -475,7 +482,6 @@ class VacuumSimulatorGUI:
 
         msg = f"Resultados após {n} simulações ({'Reativo' if agent_type=='reactive' else 'Modelo'}):\n"
         msg += f"  Média penalidade: {avg(stats['penalty']):.2f}\n"
-        msg += f"  Soma das penalidades: {total_penalty}\n"
         msg += f"  Média passos: {avg(stats['steps']):.2f}\n"
         msg += f"  Média sujeiras limpas: {avg(stats['cleaned']):.2f}\n"
         msg += f"  % chegou ao final: {pct(stats['final']):.1f}%\n"
@@ -516,8 +522,19 @@ class VacuumSimulatorGUI:
         )
 
     def reset_scenario(self):
-        # Restaura o ambiente ao estado inicial salvo
-        if self.initial_grid is not None and self.initial_obstacles is not None and self.initial_agent_pos is not None:
+        scenario_name = self.scenario_var.get()
+        # Se for cenário 1, 2 ou 3, recarrega o cenário original
+        if scenario_name in ["Cenário 1", "Cenário 2", "Cenário 3"]:
+            self.load_scenario(scenario_name)
+            self.agent = None
+            self.measure1 = None
+            self.measure2 = None
+            self.running = False
+            self.current_step = 0
+            self.started = False
+            self.penalty_score = 0
+            self.status_label.config(text="Cenário redefinido.")
+        elif self.initial_grid is not None and self.initial_obstacles is not None and self.initial_agent_pos is not None:
             self.env.grid = [row[:] for row in self.initial_grid]
             self.env.obstacles = [row[:] for row in self.initial_obstacles]
             self.env.agent_pos = self.initial_agent_pos
@@ -532,7 +549,6 @@ class VacuumSimulatorGUI:
             self.status_label.config(text="Cenário redefinido.")
         else:
             # Se não há estado salvo, recarrega como antes
-            scenario_name = self.scenario_var.get()
             if scenario_name in self.scenarios:
                 self.load_scenario(scenario_name)
             else:

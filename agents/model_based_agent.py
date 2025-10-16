@@ -140,4 +140,3 @@ class ModelBasedAgent:
 # - Não utiliza conhecimento prévio de obstáculos, apenas evita movimentos bloqueados conforme informado pelo ambiente.
 # - O agente retorna à posição inicial apenas se a simulação exigir, mas não faz planejamento para isso após limpar tudo.
 # - O comportamento é de exploração eficiente, priorizando novas células, mas pode revisitar antigas se necessário.
-
