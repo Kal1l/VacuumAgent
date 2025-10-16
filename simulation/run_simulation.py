@@ -3,7 +3,7 @@ import tkinter as tk
 from environment.grid_environment import GridEnvironment
 from agents.reactive_agent import ReactiveAgent
 from agents.model_based_agent import ModelBasedAgent
-from evaluation.measures import MeasureCleanPerStep, MeasureCleanAndMovePenalty
+from evaluation.measures import MeasureCleanPerStep, MeasureCleanAndMovePositive
 
 class VacuumSimulatorGUI:
     CELL_SIZE = 40
@@ -51,56 +51,64 @@ class VacuumSimulatorGUI:
         self._build_controls()
         self.canvas = tk.Canvas(self.root, width=self.width*self.CELL_SIZE, height=self.height*self.CELL_SIZE)
         self.canvas.grid(row=1, column=0, columnspan=6, sticky="w", padx=(5,0), pady=(5,0))
+
         # Legenda visual ao lado da matriz, só será exibida após carregar cenário
         self.legend_frame = tk.Frame(self.root)
-        self.legend_frame.grid(row=1, column=self.height+1, sticky="nw", padx=(0,5), pady=(5,0))
-        self.legend_frame.grid_remove()  # Oculta inicialmente
-        tk.Label(self.legend_frame, text="Legenda:").pack(anchor="w")
-        legend_row = tk.Frame(self.legend_frame)
-        legend_row.pack(anchor="w")
-        tk.Canvas(legend_row, width=20, height=20, bg="white").pack(side="left", padx=(0,2))
-        tk.Label(legend_row, text="Livre", anchor="w", padx=2).pack(side="left")
-        tk.Canvas(legend_row, width=20, height=20, bg="brown").pack(side="left", padx=(0,2))
-        tk.Label(legend_row, text="Sujeira", anchor="w", padx=2).pack(side="left")
-        tk.Canvas(legend_row, width=20, height=20, bg="gray").pack(side="left", padx=(0,2))
-        tk.Label(legend_row, text="Obstáculo", anchor="w", padx=2).pack(side="left")
-        tk.Canvas(legend_row, width=20, height=20, bg="blue").pack(side="left", padx=(0,2))
-        tk.Label(legend_row, text="Agente", anchor="w", padx=2).pack(side="left")
-        tk.Label(self.legend_frame, text="Modo Edição: Esq=Obstáculo, Dir=Sujeira").pack(anchor="w", pady=(8,0))
-        # ...existing code...
+        self.legend_frame.grid(row=1, column=9, sticky="nw", padx=(5,0))
+        tk.Label(self.legend_frame, text="Legenda:").pack(anchor="nw")
+        # Legenda em coluna
+        legend_col = tk.Frame(self.legend_frame)
+        legend_col.pack(anchor="nw")
+        row1 = tk.Frame(legend_col)
+        row1.pack(anchor="nw")
+        tk.Canvas(row1, width=20, height=20, bg="white").pack(side="left")
+        tk.Label(row1, text="Livre", anchor="w", padx=2).pack(side="left")
+        row2 = tk.Frame(legend_col)
+        row2.pack(anchor="nw")
+        tk.Canvas(row2, width=20, height=20, bg="brown").pack(side="left")
+        tk.Label(row2, text="Sujeira", anchor="w", padx=2).pack(side="left")
+        row3 = tk.Frame(legend_col)
+        row3.pack(anchor="nw")
+        tk.Canvas(row3, width=20, height=20, bg="gray").pack(side="left")
+        tk.Label(row3, text="Obstáculo", anchor="w", padx=2).pack(side="left")
+        row4 = tk.Frame(legend_col)
+        row4.pack(anchor="nw")
+        tk.Canvas(row4, width=20, height=20, bg="blue").pack(side="left")
+        tk.Label(row4, text="Agente", anchor="w", padx=2).pack(side="left")
+        tk.Label(self.legend_frame, text="Modo Edição:\nEsq=Obstáculo\nDir=Sujeira").pack(anchor="nw", pady=(8,0))
 
     def _build_controls(self):
-        # Barra superior mais compacta
-        tk.Label(self.root, text="Largura:").grid(row=0, column=0, sticky="w", padx=(5,2), pady=(5,2))
+        # Barra superior mais compacta (reduzindo padding horizontal e vertical)
+        tk.Label(self.root, text="Largura:").grid(row=0, column=0, sticky="w", padx=(0,1), pady=(2,1))
         self.width_entry = tk.Entry(self.root, width=3)
         self.width_entry.insert(0, str(self.width))
-        self.width_entry.grid(row=0, column=1, sticky="w", padx=(0,2), pady=(5,2))
+        self.width_entry.grid(row=0, column=1, sticky="w", padx=(0,1), pady=(2,1))
 
-        tk.Label(self.root, text="Altura:").grid(row=0, column=2, sticky="w", padx=(0,2), pady=(5,2))
+        tk.Label(self.root, text="Altura:").grid(row=0, column=2, sticky="w", padx=(0,1), pady=(2,1))
         self.height_entry = tk.Entry(self.root, width=3)
         self.height_entry.insert(0, str(self.height))
-        self.height_entry.grid(row=0, column=3, sticky="w", padx=(0,2), pady=(5,2))
+        self.height_entry.grid(row=0, column=3, sticky="w", padx=(0,1), pady=(2,1))
 
-        tk.Label(self.root, text="Prob. Sujeira:").grid(row=0, column=4, sticky="w", padx=(0,2), pady=(5,2))
+        tk.Label(self.root, text="Prob. Sujeira:").grid(row=0, column=4, sticky="w", padx=(0,1), pady=(2,1))
         self.dirt_entry = tk.Entry(self.root, width=4)
         self.dirt_entry.insert(0, str(self.dirt_prob))
-        self.dirt_entry.grid(row=0, column=5, sticky="w", padx=(0,2), pady=(5,2))
+        self.dirt_entry.grid(row=0, column=5, sticky="w", padx=(0,1), pady=(2,1))
 
-        tk.Label(self.root, text="Prob. Obstáculo:").grid(row=0, column=6, sticky="w", padx=(0,2), pady=(5,2))
+        tk.Label(self.root, text="Prob. Obstáculo:").grid(row=0, column=6, sticky="w", padx=(0,1), pady=(2,1))
         self.obstacle_entry = tk.Entry(self.root, width=4)
         self.obstacle_entry.insert(0, str(self.obstacle_prob))
-        self.obstacle_entry.grid(row=0, column=7, sticky="w", padx=(0,2), pady=(5,2))
+        self.obstacle_entry.grid(row=0, column=7, sticky="w", padx=(0,1), pady=(2,1))
 
-        tk.Label(self.root, text="Agente:").grid(row=2, column=0, sticky="w", padx=(5,2), pady=(2,2))
-        tk.Radiobutton(self.root, text="Reativo", variable=self.agent_type, value='reactive').grid(row=2, column=1, sticky="w", padx=(0,2), pady=(2,2))
-        tk.Radiobutton(self.root, text="Modelo", variable=self.agent_type, value='model').grid(row=2, column=2, sticky="w", padx=(0,2), pady=(2,2))
+        tk.Label(self.root, text="Agente:").grid(row=2, column=0, sticky="w", padx=(2,1), pady=(1,1))
+        tk.Radiobutton(self.root, text="Reativo", variable=self.agent_type, value='reactive').grid(row=2, column=1, sticky="w", padx=(0,1), pady=(1,1))
+        tk.Radiobutton(self.root, text="Modelo", variable=self.agent_type, value='model').grid(row=2, column=2, sticky="w", padx=(0,1), pady=(1,1))
 
-        tk.Button(self.root, text="Criar Ambiente", command=self.create_env).grid(row=2, column=3, sticky="w", padx=(0,2), pady=(2,2))
-        tk.Button(self.root, text="Iniciar", command=self.start_simulation).grid(row=2, column=4, sticky="w", padx=(0,2), pady=(2,2))
-        tk.Button(self.root, text="Parar", command=self.stop_simulation).grid(row=2, column=5, sticky="w", padx=(0,2), pady=(2,2))
-        tk.Button(self.root, text="Avançar 1 Passo", command=self.step_once).grid(row=2, column=6, sticky="w", padx=(0,2), pady=(2,2))
+        tk.Button(self.root, text="Criar Ambiente", command=self.create_env).grid(row=2, column=3, sticky="w", padx=(0,1), pady=(1,1))
+        tk.Button(self.root, text="Iniciar", command=self.start_simulation).grid(row=2, column=4, sticky="w", padx=(0,1), pady=(1,1))
+        tk.Button(self.root, text="Parar", command=self.stop_simulation).grid(row=2, column=5, sticky="w", padx=(0,1), pady=(1,1))
+        tk.Button(self.root, text="Avançar 1 Passo", command=self.step_once).grid(row=2, column=6, sticky="w", padx=(0,1), pady=(1,1))
 
-        tk.Label(self.root, text="Cenário:").grid(row=0, column=8, sticky="w", padx=(0,2), pady=(5,2))
+        tk.Label(self.root, text="Cenário:").grid(row=0, column=8, sticky="w", padx=(0,1), pady=(2,1))
         scenario_menu = tk.OptionMenu(self.root, self.scenario_var, *self.scenarios.keys(), command=self.on_scenario_change)
         scenario_menu.grid(row=0, column=9, sticky="w", padx=(0,2), pady=(5,2))
 
@@ -253,7 +261,7 @@ class VacuumSimulatorGUI:
             self.agent = ModelBasedAgent()
             self.agent.pos = self.env.agent_pos
         self.measure1 = MeasureCleanPerStep()
-        self.measure2 = MeasureCleanAndMovePenalty()
+        self.measure2 = MeasureCleanAndMovePositive()
         self.current_step = 0
         self.started = False
         self.simulation_step(self.current_step)
@@ -264,13 +272,12 @@ class VacuumSimulatorGUI:
     def simulation_step(self, step):
         # Corrige parada: só para se já saiu da posição inicial e voltou
         if not self.running or step >= self.steps or (self.started and self.env.agent_pos == (0, 0)):
-            self.status_label.config(
-                text=f"Fim!  Passos: {step} | Limpo: {self.measure1.score}| Limpo/Penalidade: {self.measure2.score}"
-            )
+            final_status = f"Fim! Passos: {step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.measure2.final_score()} | Sujeiras limpas: {self.measure2.cleaned} | Chegou à posição final: {'Sim' if self.env.agent_pos == (0, 0) else 'Não'}"
+            self.status_label.config(text=final_status)
             return
         # Atualize a quantidade de passos em tempo real
         self.status_label.config(
-            text=f"Passos: {step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.measure2.score}"
+            text=f"Passos: {step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.measure2.final_score()}"
         )
         percept = self.env.get_local_percept()
         action = self.agent.select_action(percept)
@@ -313,14 +320,13 @@ class VacuumSimulatorGUI:
                 self.agent = ModelBasedAgent()
                 self.agent.pos = self.env.agent_pos
             self.measure1 = MeasureCleanPerStep()
-            self.measure2 = MeasureCleanAndMovePenalty()
+            self.measure2 = MeasureCleanAndMovePositive()
             self.current_step = 0
             self.started = False  # reset ao iniciar
         # Corrige parada: só para se já saiu da posição inicial e voltou
         if self.started and self.env.agent_pos == (0, 0):
-            self.status_label.config(
-                text=f"Fim! Limpo: {self.measure1.score}, Limpo/Penalidade: {self.measure2.score}, Passos: {self.current_step}"
-            )
+            final_status = f"Fim! Limpo: {self.measure1.score}, Limpo/Penalidade: {self.measure2.final_score()}, Passos: {self.current_step} | Sujeiras limpas: {self.measure2.cleaned} | Chegou à posição final: {'Sim' if self.env.agent_pos == (0, 0) else 'Não'}"
+            self.status_label.config(text=final_status)
             return
         percept = self.env.get_local_percept()
         action = self.agent.select_action(percept)
@@ -343,7 +349,7 @@ class VacuumSimulatorGUI:
         if self.env.agent_pos != (0, 0):
             self.started = True
         self.status_label.config(
-            text=f"Passos: {self.current_step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.measure2.score}"
+            text=f"Passos: {self.current_step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.measure2.final_score()}"
         )
         if highlight:
             self.root.after(300, lambda: self.draw_grid())
