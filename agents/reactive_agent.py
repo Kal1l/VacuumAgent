@@ -7,4 +7,5 @@ class ReactiveAgent:
             return 'CLEAN'
         else:
             actions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+            # Tenta qualquer direção, mas penalidade só conta se movimento for possível
             return random.choice(actions)
