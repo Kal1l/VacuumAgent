@@ -23,7 +23,7 @@ class VacuumSimulatorGUI:
         self.dirt_prob = 0.3
         self.agent_type = tk.StringVar(value='reactive')
         self.running = False
-        self.steps = 1000
+        self.steps = 100
         self.current_step = 0
         self.started = False
         self.obstacle_prob = 0.15
