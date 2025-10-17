@@ -3,7 +3,16 @@ from collections import deque
 
 
 class ModelBasedAgent:
+    """
+    Agente baseado em modelo que constrói representação interna do ambiente
+    para tomar decisões mais informadas. Prioriza exploração de áreas não visitadas
+    e retorna à posição inicial quando termina.
+    """
+    
     def __init__(self):
+        """
+        Inicializa o modelo interno do agente com mapas e variáveis de controle.
+        """
         self.pos = (0, 0)
         self.visited = set()
         self.obstacles = set()
@@ -12,6 +21,21 @@ class ModelBasedAgent:
         self.home_path = []
 
     def select_action(self, percept):
+        """
+        Seleciona a próxima ação com base na percepção atual e modelo interno.
+        
+        Estratégia:
+        1. Limpa se a célula atual estiver suja
+        2. Prioriza células não visitadas
+        3. Busca caminho para áreas inexploradas
+        4. Retorna à posição inicial (0,0) se não há mais a explorar
+        
+        Args:
+            percept: Percepção local do ambiente
+            
+        Retorna:
+            Ação a ser executada (CLEAN, UP, DOWN, LEFT, RIGHT)
+        """
         y, x = self.pos
         self.visited.add((y, x))
         self.map[(y, x)] = self.map.get((y, x), {'visited': False, 'obstacle': False})
@@ -87,6 +111,16 @@ class ModelBasedAgent:
         return 'CLEAN'
 
     def _get_new_pos(self, move):
+        """
+        Calcula nova posição após movimento específico.
+        
+        Args:
+            move: Direção do movimento
+            
+        Retorna:
+            Nova posição (y, x)
+        """
+
         y, x = self.pos
         if move == 'UP': return (y-1, x)
         if move == 'DOWN': return (y+1, x)
@@ -95,6 +129,16 @@ class ModelBasedAgent:
         return (y, x)
 
     def _move_to_pos(self, target_pos):
+        """
+        Determina movimento necessário para alcançar posição alvo adjacente.
+        
+        Args:
+            target_pos: Posição alvo
+            
+        Retorna:
+            Ação de movimento ou None se não for adjacente
+        """
+
         y, x = self.pos
         ty, tx = target_pos
         if ty < y: return 'UP'
@@ -104,7 +148,17 @@ class ModelBasedAgent:
         return None
 
     def _shortest_path(self, start, goals):
-        # BFS para o caminho mais curto até qualquer posição em goals
+        """
+        Calcula caminho mais curto da posição atual até qualquer objetivo usando BFS.
+        
+        Args:
+            start: Posição inicial
+            goals: Lista de possíveis posições objetivo
+
+        Retorna:
+            Lista de posições representando o caminho ou None se não houver caminho
+        """
+
         queue = deque()
         queue.append((start, [start]))
         visited = set()
@@ -123,20 +177,20 @@ class ModelBasedAgent:
         return None
 
     def _get_pos_from(self, pos, move):
+        """
+        Calcula posição resultante a partir de posição e movimento específicos.
+        
+        Args:
+            pos: Posição inicial (y, x)
+            move: Direção do movimento
+
+        Retorna:
+            Nova posição (y, x)
+        """
+        
         y, x = pos
         if move == 'UP': return (y-1, x)
         if move == 'DOWN': return (y+1, x)
         if move == 'LEFT': return (y, x-1)
         if move == 'RIGHT': return (y, x+1)
         return (y, x)
-
-# O agente modelo agora:
-# - Mantém um mapa interno das células visitadas e limpas, mas não sabe onde estão os obstáculos.
-# - Prioriza limpar a célula atual se estiver suja.
-# - Prioriza movimentos para células não visitadas acessíveis.
-# - Se não há células não visitadas acessíveis, segue um caminho sistemático (ziguezague) para explorar o ambiente.
-# - Se não encontra células não visitadas, comporta-se como um agente reativo simples, tentando movimentos aleatórios válidos.
-# - Não sabe quantas sujeiras existem no ambiente e não depende de limpar tudo para decidir suas ações.
-# - Não utiliza conhecimento prévio de obstáculos, apenas evita movimentos bloqueados conforme informado pelo ambiente.
-# - O agente retorna à posição inicial apenas se a simulação exigir, mas não faz planejamento para isso após limpar tudo.
-# - O comportamento é de exploração eficiente, priorizando novas células, mas pode revisitar antigas se necessário.

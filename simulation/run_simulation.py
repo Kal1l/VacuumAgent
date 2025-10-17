@@ -6,6 +6,13 @@ from agents.model_based_agent import ModelBasedAgent
 from evaluation.measures import MeasureCleanPerStep, MeasureCleanAndMovePositive
 
 class VacuumSimulatorGUI:
+
+    """
+    Interface gráfica para simulação de agentes aspiradores.
+    Permite criar ambientes personalizados, escolher tipos de agentes e
+    executar simulações únicas ou múltiplas para avaliar desempenho.
+    """
+
     CELL_SIZE = 40
 
     def __init__(self):
@@ -63,7 +70,7 @@ class VacuumSimulatorGUI:
 
         # Frame para canvas (matriz), centralizado
         canvas_frame = tk.Frame(main_frame)
-        canvas_frame.grid(row=1, column=0, sticky="n", padx=(80,0))  # Mais padding para centralizar
+        canvas_frame.grid(row=1, column=0, sticky="n", padx=(80,0))
 
         # Frame para legenda (lado direito)
         legend_frame = tk.Frame(main_frame)
@@ -96,6 +103,8 @@ class VacuumSimulatorGUI:
         tk.Label(self.legend_frame, text="Modo Edição:\nEsq=Obstáculo\nDir=Sujeira").pack(anchor="nw", pady=(8,0))
 
     def _build_controls(self, parent):
+        """Constrói painel de controle com opções de configuração da simulação."""
+
         row = 0
         # Largura e Altura alinhados
         tk.Label(parent, text="Largura:").grid(row=row, column=0, sticky="e")
@@ -150,9 +159,13 @@ class VacuumSimulatorGUI:
         self.status_label.grid(row=row, column=0, columnspan=4, sticky="w", padx=(5,2), pady=(2,2))
 
     def on_scenario_change(self, value):
+        """Manipula evento de mudança de cenário no menu suspenso."""
+
         self.load_scenario(value)
 
     def load_scenario(self, scenario_name):
+        """Carrega um cenário específico no ambiente de simulação."""
+
         scenario = self.scenarios.get(scenario_name)
         if scenario_name == "Custom":
             self.width = scenario["width"]
@@ -221,7 +234,6 @@ class VacuumSimulatorGUI:
             self.started = False
             self.draw_grid()
             self.status_label.config(text=f"{scenario_name} carregado.")
-            # Corrigido: use toggle_custom para edição, não toggle_obstacle
             self.canvas.bind("<Button-1>", self.toggle_custom)
             self.canvas.bind("<Button-3>", self.toggle_custom)
         else:
@@ -230,6 +242,8 @@ class VacuumSimulatorGUI:
         self.legend_frame.grid()  # Torna visível
 
     def create_env(self):
+        """Cria um novo ambiente baseado nas configurações atuais."""
+
         try:
             self.width = int(self.width_entry.get())
             self.height = int(self.height_entry.get())
@@ -253,7 +267,6 @@ class VacuumSimulatorGUI:
             self.started = False
             self.draw_grid()
             self.status_label.config(text="Ambiente criado.")
-            # Corrigido: use toggle_custom para edição de obstáculos/sujeira
             self.canvas.bind("<Button-1>", self.toggle_custom)
             self.canvas.bind("<Button-3>", self.toggle_custom)
         elif self.scenario_var.get() == "Custom":
@@ -263,6 +276,12 @@ class VacuumSimulatorGUI:
         self.legend_frame.grid()  # Torna visível ao criar ambiente
 
     def toggle_custom(self, event):
+        """
+        Manipula cliques do mouse para adicionar/remover obstáculos e sujeira.
+        Botão esquerdo: alterna obstáculos
+        Botão direito: alterna sujeira
+        """
+
         x = event.x // self.CELL_SIZE
         y = event.y // self.CELL_SIZE
         if 0 <= x < self.width and 0 <= y < self.height:
@@ -293,6 +312,8 @@ class VacuumSimulatorGUI:
             self.draw_grid()
 
     def start_simulation(self):
+        """Inicializa e executa uma simulação contínua."""
+
         if not self.env:
             self.status_label.config(text="Crie o ambiente primeiro.")
             return
@@ -310,15 +331,21 @@ class VacuumSimulatorGUI:
         self.simulation_step(self.current_step)
 
     def stop_simulation(self):
+        """Interrompe a simulação em andamento."""
+        
         self.running = False
 
     def simulation_step(self, step):
-        # Corrige parada: só para se já saiu da posição inicial e voltou
+        """
+        Executa um único passo da simulação.
+        
+        step: Número do passo atual
+        """
+
         if not self.running or step >= self.steps or (self.started and self.env.agent_pos == (0, 0)):
             final_status = f"Fim! Passos: {step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.penalty_score} |  Chegou à posição final: {'Sim' if self.env.agent_pos == (0, 0) else 'Não'}"
             self.status_label.config(text=final_status)
             return
-        # Atualize a quantidade de passos em tempo real
         self.status_label.config(
             text=f"Passos: {step} | Limpo: {self.measure1.score} | Limpo/Penalidade: {self.penalty_score}"
         )
@@ -357,7 +384,8 @@ class VacuumSimulatorGUI:
             self.root.after(300, lambda: self.simulation_step(self.current_step))
 
     def step_once(self):
-        # Executa apenas um passo da simulação
+        """Executa um único passo da simulação e atualiza a interface."""
+
         if not self.env:
             self.status_label.config(text="Crie o ambiente primeiro.")
             return
@@ -372,7 +400,6 @@ class VacuumSimulatorGUI:
             self.current_step = 0
             self.started = False  # reset ao iniciar
             self.penalty_score = 0  # inicializa penalidade
-        # Corrige parada: só para se já saiu da posição inicial e voltou
         if self.started and self.env.agent_pos == (0, 0):
             final_status = f"Fim! Limpo: {self.measure1.score}, Limpo/Penalidade: {self.penalty_score}, Passos: {self.current_step} | Sujeiras limpas: {self.measure2.cleaned} | Chegou à posição final: {'Sim' if self.env.agent_pos == (0, 0) else 'Não'}"
             self.status_label.config(text=final_status)
@@ -409,6 +436,8 @@ class VacuumSimulatorGUI:
             self.root.after(300, lambda: self.draw_grid())
 
     def run_multiple_simulations(self):
+        """Executa múltiplas simulações e coleta estatísticas de desempenho."""
+
         try:
             n = int(self.sim_entry.get())
         except ValueError:
@@ -490,6 +519,17 @@ class VacuumSimulatorGUI:
         self.status_label.config(text=msg)
 
     def _get_target_pos(self, pos, action):
+        """
+        Calcula a nova posição resultante de uma ação.
+        
+        Args:
+            pos: Posição atual (y, x)
+            action: Ação de movimento (UP, DOWN, LEFT, RIGHT)
+            
+        Retorna:
+            Nova posição após movimento
+        """
+
         y, x = pos
         if action == 'UP': return (y-1, x)
         if action == 'DOWN': return (y+1, x)
@@ -498,6 +538,13 @@ class VacuumSimulatorGUI:
         return pos
 
     def draw_grid(self, highlight=None):
+        """
+        Renderiza a grade do ambiente na interface gráfica.
+        
+        Args:
+            highlight: Posição opcional (y, x) para destacar com cor diferente
+        """
+
         self.canvas.delete("all")
         if not hasattr(self, 'env') or self.env is None:
             return
@@ -522,8 +569,9 @@ class VacuumSimulatorGUI:
         )
 
     def reset_scenario(self):
+        """Restaura o cenário ao estado inicial."""
+
         scenario_name = self.scenario_var.get()
-        # Se for cenário 1, 2 ou 3, recarrega o cenário original
         if scenario_name in ["Cenário 1", "Cenário 2", "Cenário 3"]:
             self.load_scenario(scenario_name)
             self.agent = None
@@ -563,6 +611,8 @@ class VacuumSimulatorGUI:
             self.status_label.config(text="Cenário redefinido.")
 
 def main():
+    """Inicializa e executa a interface do simulador."""
+
     gui = VacuumSimulatorGUI()
     gui.root.mainloop()
 
